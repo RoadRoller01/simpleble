@@ -67,15 +67,20 @@ pub fn build(b: *std.Build) void {
     simpleble.root_module.addCMacro("SIMPLEBLE_LOG_LEVEL", b.fmt("SIMPLEBLE_LOG_LEVEL_{s}", .{log_level}));
     simpleble.root_module.addCMacro("SIMPLEBLE_VERSION", "\"0.9.0\"");
 
+    // Initialize all SIMPLEBLE_BACKEND_ macros to zero except target.
+    simpleble.root_module.addCMacro("SIMPLEBLE_BACKEND_PLAIN", if (plain) "1" else "0");
+    simpleble.root_module.addCMacro("SIMPLEBLE_BACKEND_LINUX", if (is_linux) "1" else "0");
+    simpleble.root_module.addCMacro("SIMPLEBLE_BACKEND_WINDOWS", if (is_windows) "1" else "0");
+    simpleble.root_module.addCMacro("SIMPLEBLE_BACKEND_MACOS", if (is_macos) "1" else "0");
+    simpleble.root_module.addCMacro("SIMPLEBLE_BACKEND_ANDROID", if (is_android) "1" else "0");
+
     if (plain) {
-        simpleble.root_module.addCMacro("SIMPLEBLE_BACKEND_PLAIN", "1");
         simpleble.addCSourceFiles(.{
             .root = upstream.path("."),
             .files = plain_sources,
             .flags = cpp_flags,
         });
     } else if (is_linux) {
-        simpleble.root_module.addCMacro("SIMPLEBLE_BACKEND_LINUX", "1");
         simpleble.linkSystemLibrary("dbus-1");
         simpleble.linkSystemLibrary("pthread");
 
@@ -92,7 +97,6 @@ pub fn build(b: *std.Build) void {
         simpleble.addIncludePath(upstream.path("simplebluez/include"));
         simpleble.addIncludePath(upstream.path("simpledbus/include"));
     } else if (is_windows) {
-        simpleble.root_module.addCMacro("SIMPLEBLE_BACKEND_WINDOWS", "1");
         simpleble.root_module.addCMacro("_WIN32_WINNT", "0x0A00"); // Windows 10
         simpleble.root_module.addCMacro("_USE_MATH_DEFINES", "1");
         simpleble.root_module.addCMacro("NOMINMAX", "1");
@@ -106,7 +110,6 @@ pub fn build(b: *std.Build) void {
         simpleble.linkSystemLibrary("ole32");
         simpleble.linkSystemLibrary("runtimeobject");
     } else if (is_macos) {
-        simpleble.root_module.addCMacro("SIMPLEBLE_BACKEND_MACOS", "1");
         simpleble.linkFramework("Foundation");
         simpleble.linkFramework("CoreBluetooth");
         simpleble.linkSystemLibrary("objc");
@@ -117,7 +120,6 @@ pub fn build(b: *std.Build) void {
             .flags = cpp_flags ++ [_][]const u8{"-fobjc-arc"},
         });
     } else if (is_android) {
-        simpleble.root_module.addCMacro("SIMPLEBLE_BACKEND_ANDROID", "1");
         simpleble.root_module.addCMacro("ANDROID", "1");
         simpleble.root_module.addCMacro("__ANDROID_API__", "24"); // TODO: Make configurable
 
