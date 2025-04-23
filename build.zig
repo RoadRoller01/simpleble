@@ -35,20 +35,15 @@ pub fn build(b: *std.Build) void {
     });
     b.installArtifact(simpleble);
     simpleble.linkLibCpp();
+    // simpleble.linkSystemLibrary("fmt");
 
     // Common compilation flags
     const cpp_flags: []const []const u8 = &.{
         "-std=c++17",
         "-fvisibility=hidden",
         "-fvisibility-inlines-hidden",
+        "-DSIMPLEBLE_VERSION=\"0.9.0\"",
     };
-
-    // Common sources
-    simpleble.addCSourceFiles(.{
-        .root = upstream.path("."),
-        .files = common_sources,
-        .flags = cpp_flags,
-    });
 
     // Common includes
     simpleble.addIncludePath(upstream.path("simpleble/src"));
@@ -65,7 +60,7 @@ pub fn build(b: *std.Build) void {
 
     // Definitions
     simpleble.root_module.addCMacro("SIMPLEBLE_LOG_LEVEL", b.fmt("SIMPLEBLE_LOG_LEVEL_{s}", .{log_level}));
-    simpleble.root_module.addCMacro("SIMPLEBLE_VERSION", "\"0.9.0\"");
+    // simpleble.root_module.addCMacro("SIMPLEBLE_VERSION", "\"0.9.0\""); Note: it doesn't work; Added it manually in cpp_flags.
 
     // Initialize all SIMPLEBLE_BACKEND_ macros to zero except target.
     simpleble.root_module.addCMacro("SIMPLEBLE_BACKEND_PLAIN", if (plain) "1" else "0");
@@ -73,6 +68,13 @@ pub fn build(b: *std.Build) void {
     simpleble.root_module.addCMacro("SIMPLEBLE_BACKEND_WINDOWS", if (is_windows) "1" else "0");
     simpleble.root_module.addCMacro("SIMPLEBLE_BACKEND_MACOS", if (is_macos) "1" else "0");
     simpleble.root_module.addCMacro("SIMPLEBLE_BACKEND_ANDROID", if (is_android) "1" else "0");
+
+    // Common sources
+    simpleble.addCSourceFiles(.{
+        .root = upstream.path("."),
+        .files = common_sources,
+        .flags = cpp_flags,
+    });
 
     if (plain) {
         simpleble.addCSourceFiles(.{
