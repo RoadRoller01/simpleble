@@ -35,7 +35,7 @@ pub fn build(b: *std.Build) void {
     });
     b.installArtifact(simpleble);
     simpleble.linkLibCpp();
-    // simpleble.linkSystemLibrary("fmt");
+    simpleble.linkSystemLibrary("fmt");
 
     // Common compilation flags
     const cpp_flags: []const []const u8 = &.{
