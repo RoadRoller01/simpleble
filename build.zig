@@ -57,6 +57,7 @@ pub fn build(b: *std.Build) void {
     // Public includes
     simpleble.installHeadersDirectory(upstream.path("simpleble/include/simpleble"), "simpleble", .{});
     simpleble.installHeadersDirectory(upstream.path("external/include"), "simpleble", .{});
+    simpleble.installHeader(b.path("cmake_generate_export_header.h"), "simpleble/export.h");
 
     // Definitions
     simpleble.root_module.addCMacro("SIMPLEBLE_LOG_LEVEL", b.fmt("SIMPLEBLE_LOG_LEVEL_{s}", .{log_level}));
