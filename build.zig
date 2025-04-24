@@ -53,11 +53,12 @@ pub fn build(b: *std.Build) void {
     simpleble.addIncludePath(upstream.path("simpleble/src/backends/common"));
     simpleble.addIncludePath(upstream.path("simpleble/src/frontends/safe"));
     simpleble.addIncludePath(upstream.path("external/include"));
+    simpleble.addIncludePath(b.path("include"));
 
     // Public includes
     simpleble.installHeadersDirectory(upstream.path("simpleble/include/simpleble"), "simpleble", .{});
     simpleble.installHeadersDirectory(upstream.path("external/include"), "simpleble", .{});
-    simpleble.installHeader(b.path("cmake_generate_export_header.h"), "simpleble/export.h");
+    simpleble.installHeadersDirectory(b.path("include/simpleble"), "simpleble", .{});
 
     // Definitions
     simpleble.root_module.addCMacro("SIMPLEBLE_LOG_LEVEL", b.fmt("SIMPLEBLE_LOG_LEVEL_{s}", .{log_level}));
@@ -158,7 +159,8 @@ pub fn build(b: *std.Build) void {
         });
 
         simpleble_c.linkLibrary(simpleble);
-        simpleble_c.addIncludePath(upstream.path("include"));
+
+        simpleble_c.addIncludePath(upstream.path("simpleble/include"));
         simpleble_c.installHeadersDirectory(upstream.path("simpleble/include/simpleble_c"), "simpleble_c", .{});
 
         b.installArtifact(simpleble_c);
