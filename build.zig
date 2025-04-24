@@ -35,6 +35,8 @@ pub fn build(b: *std.Build) void {
     });
     b.installArtifact(simpleble);
     simpleble.linkLibCpp();
+
+    simpleble.root_module.addCMacro("FMT_HEADER_ONLY", "1");
     simpleble.linkSystemLibrary("fmt");
 
     // Common compilation flags
@@ -42,7 +44,6 @@ pub fn build(b: *std.Build) void {
         "-std=c++17",
         "-fvisibility=hidden",
         "-fvisibility-inlines-hidden",
-        "-DSIMPLEBLE_VERSION=\"0.9.0\"",
     };
 
     // Common includes
@@ -62,7 +63,7 @@ pub fn build(b: *std.Build) void {
 
     // Definitions
     simpleble.root_module.addCMacro("SIMPLEBLE_LOG_LEVEL", b.fmt("SIMPLEBLE_LOG_LEVEL_{s}", .{log_level}));
-    // simpleble.root_module.addCMacro("SIMPLEBLE_VERSION", "\"0.9.0\""); Note: it doesn't work; Added it manually in cpp_flags.
+    simpleble.root_module.addCMacro("SIMPLEBLE_VERSION", "\"0.9.0\""); // Note: it doesn't work; Added it manually in cpp_flags.
 
     // Initialize all SIMPLEBLE_BACKEND_ macros to zero except target.
     simpleble.root_module.addCMacro("SIMPLEBLE_BACKEND_PLAIN", if (plain) "1" else "0");
@@ -140,30 +141,13 @@ pub fn build(b: *std.Build) void {
 
     // C bindings
     if (!exclude_c) {
-        const simpleble_c = b.addLibrary(.{
-            .linkage = linkage,
-            .name = "simpleble-c",
-            .root_module = b.createModule(.{
-                .target = target,
-                .optimize = optimize,
-                .strip = strip,
-                .pic = pic,
-                .link_libc = true,
-            }),
-        });
-        simpleble_c.linkLibCpp();
-        simpleble_c.addCSourceFiles(.{
+        simpleble.addCSourceFiles(.{
             .root = upstream.path("."),
             .files = c_binding_sources,
             .flags = cpp_flags,
         });
 
-        simpleble_c.linkLibrary(simpleble);
-
-        simpleble_c.addIncludePath(upstream.path("simpleble/include"));
-        simpleble_c.installHeadersDirectory(upstream.path("simpleble/include/simpleble_c"), "simpleble_c", .{});
-
-        b.installArtifact(simpleble_c);
+        simpleble.installHeadersDirectory(upstream.path("simpleble/include/simpleble_c"), "simpleble_c", .{});
     }
 
     // Tests
