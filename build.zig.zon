@@ -7,11 +7,15 @@
             .url = "git+https://github.com/simpleble/simpleble?ref=v0.9.0#b42d6ee9516ba8dc97f4de8dde2390e74aa697a2",
             .hash = "N-V-__8AAM3VFgC8wND7_hHz3dWHCXlNtYd6Ta5YNsHIBF_f",
         },
+        .fmt = .{
+            .url = "git+https://github.com/allyourcodebase/fmt-zig#72f037c03fc78dc615628959fafce03000086777",
+            .hash = "fmt-0.1.0-oeD-Jg0oAACzHwua6rJp5G2QZ3mto6-gNMIcsNjmVVx4",
+        },
     },
     .paths = .{
         "build.zig",
         "build.zig.zon",
-        "include/simpleble/export.h",
+        "include/",
         "LICENSE",
         "README.md",
     },

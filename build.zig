@@ -36,12 +36,16 @@ pub fn build(b: *std.Build) void {
     b.installArtifact(simpleble);
     simpleble.linkLibCpp();
 
-    simpleble.root_module.addCMacro("FMT_HEADER_ONLY", "1");
-    simpleble.linkSystemLibrary("fmt");
+    const fmt_dependency = b.dependency("fmt", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    // simpleble.root_module.addCMacro("FMT_HEADER_ONLY", "1");
+    simpleble.linkLibrary(fmt_dependency.artifact("fmt"));
 
     // Common compilation flags
     const cpp_flags: []const []const u8 = &.{
-        "-std=c++17",
+        "-std=c++20",
         "-fvisibility=hidden",
         "-fvisibility-inlines-hidden",
     };
@@ -102,18 +106,23 @@ pub fn build(b: *std.Build) void {
         simpleble.addIncludePath(upstream.path("simplebluez/include"));
         simpleble.addIncludePath(upstream.path("simpledbus/include"));
     } else if (is_windows) {
-        simpleble.root_module.addCMacro("_WIN32_WINNT", "0x0A00"); // Windows 10
+        // simpleble.root_module.addCMacro("_WIN32_WINNT", "0x0A00"); // Windows 10
         simpleble.root_module.addCMacro("_USE_MATH_DEFINES", "1");
         simpleble.root_module.addCMacro("NOMINMAX", "1");
+
+        simpleble.root_module.addCMacro("_DEBUG", "1");
 
         simpleble.addCSourceFiles(.{
             .root = upstream.path("."),
             .files = windows_sources,
-            .flags = cpp_flags,
+            .flags = cpp_flags ++ [_][]const u8{
+                "-include",
+                b.graph.zig_lib_directory.join(b.allocator, &[_][]const u8{"libc/include/any-windows-any/crtdbg.h"}) catch unreachable,
+            },
         });
 
         simpleble.linkSystemLibrary("ole32");
-        simpleble.linkSystemLibrary("runtimeobject");
+        // simpleble.linkSystemLibrary("runtimeobject");
     } else if (is_macos) {
         simpleble.linkFramework("Foundation");
         simpleble.linkFramework("CoreBluetooth");
@@ -227,7 +236,6 @@ const windows_sources: []const []const u8 = &.{
     "simpleble/src/backends/windows/AdapterWindows.cpp",
     "simpleble/src/backends/windows/PeripheralWindows.cpp",
     "simpleble/src/backends/windows/BackendWinRT.cpp",
-    "simpleble/src/backends/windows/MtaManager.cpp",
     "simpleble/src/backends/windows/Utils.cpp",
 };
 
