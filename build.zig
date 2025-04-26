@@ -12,7 +12,7 @@ pub fn build(b: *std.Build) void {
     // Configuration options
     const plain = b.option(bool, "plain", "Use plain version of SimpleBLE") orelse false;
     const exclude_c = b.option(bool, "exclude_c", "Exclude C bindings from SimpleBLE") orelse false;
-    const test_enabled = b.option(bool, "test", "Enable tests") orelse false;
+    // const test_enabled = b.option(bool, "test", "Enable tests") orelse false;
     const log_level = b.option([]const u8, "log_level", "Log level (INFO, WARN, etc.)") orelse "INFO";
     const use_session_dbus = b.option(bool, "use_session_dbus", "Use session DBus on Linux") orelse false;
 
@@ -57,17 +57,18 @@ pub fn build(b: *std.Build) void {
     simpleble.addIncludePath(upstream.path("simpleble/src/external"));
     simpleble.addIncludePath(upstream.path("simpleble/src/backends/common"));
     simpleble.addIncludePath(upstream.path("simpleble/src/frontends/safe"));
-    simpleble.addIncludePath(upstream.path("external/include"));
-    simpleble.addIncludePath(b.path("include"));
+    simpleble.addIncludePath(upstream.path("dependencies/external"));
+    simpleble.addIncludePath(upstream.path("dependencies/internal"));
+    simpleble.addIncludePath(b.path("include")); // cmake export.h and needed cppwinrt headers.
 
     // Public includes
     simpleble.installHeadersDirectory(upstream.path("simpleble/include/simpleble"), "simpleble", .{});
-    simpleble.installHeadersDirectory(upstream.path("external/include"), "simpleble", .{});
+    simpleble.installHeader(upstream.path("dependencies/external/kvn/kvn_bytearray.h"), "simpleble/kvn");
     simpleble.installHeadersDirectory(b.path("include/simpleble"), "simpleble", .{});
 
     // Definitions
     simpleble.root_module.addCMacro("SIMPLEBLE_LOG_LEVEL", b.fmt("SIMPLEBLE_LOG_LEVEL_{s}", .{log_level}));
-    simpleble.root_module.addCMacro("SIMPLEBLE_VERSION", "\"0.9.0\""); // Note: it doesn't work; Added it manually in cpp_flags.
+    simpleble.root_module.addCMacro("SIMPLEBLE_VERSION", "\"0.9.1\"");
 
     // Initialize all SIMPLEBLE_BACKEND_ macros to zero except target.
     simpleble.root_module.addCMacro("SIMPLEBLE_BACKEND_PLAIN", if (plain) "1" else "0");
@@ -110,8 +111,6 @@ pub fn build(b: *std.Build) void {
         simpleble.root_module.addCMacro("_USE_MATH_DEFINES", "1");
         simpleble.root_module.addCMacro("NOMINMAX", "1");
 
-        simpleble.root_module.addCMacro("_DEBUG", "1");
-
         simpleble.addCSourceFiles(.{
             .root = upstream.path("."),
             .files = windows_sources,
@@ -122,11 +121,24 @@ pub fn build(b: *std.Build) void {
         });
 
         simpleble.linkSystemLibrary("ole32");
-        // simpleble.linkSystemLibrary("runtimeobject");
+        simpleble.linkSystemLibrary("oleaut32");
+
+        // runtimeobject:
+        simpleble.linkSystemLibrary("api-ms-win-core-winrt-l1-1-0");
+        simpleble.linkSystemLibrary("api-ms-win-core-winrt-error-l1-1-0");
+        simpleble.linkSystemLibrary("api-ms-win-core-winrt-error-l1-1-1");
+        simpleble.linkSystemLibrary("api-ms-win-core-winrt-registration-l1-1-0");
+        simpleble.linkSystemLibrary("api-ms-win-core-winrt-robuffer-l1-1-0");
+        simpleble.linkSystemLibrary("api-ms-win-core-winrt-roparameterizediid-l1-1-0");
+        simpleble.linkSystemLibrary("api-ms-win-core-winrt-string-l1-1-0");
+        simpleble.linkSystemLibrary("api-ms-win-ro-typeresolution-l1-1-0");
+
+        // For crtdbg.h
+        simpleble.linkSystemLibrary("ucrtbased");
     } else if (is_macos) {
-        simpleble.linkFramework("Foundation");
-        simpleble.linkFramework("CoreBluetooth");
-        simpleble.linkSystemLibrary("objc");
+        // simpleble.linkFramework("Foundation");
+        // simpleble.linkFramework("CoreBluetooth");
+        // simpleble.linkSystemLibrary("objc");
 
         simpleble.addCSourceFiles(.{
             .root = upstream.path("."),
@@ -160,19 +172,7 @@ pub fn build(b: *std.Build) void {
     }
 
     // Tests
-    if (test_enabled) {
-        const tests = b.addTest(.{
-            .root_source_file = upstream.path("simpleble/test/src/main.cpp"),
-            .target = target,
-            .optimize = optimize,
-        });
-        tests.linkLibrary(simpleble);
-        tests.linkLibCpp();
-
-        const run_tests = b.addRunArtifact(tests);
-        const test_step = b.step("test", "Run library tests");
-        test_step.dependOn(&run_tests.step);
-    }
+    // Tests have not yet been ported...
 }
 
 const common_sources: []const []const u8 = &.{
@@ -236,6 +236,7 @@ const windows_sources: []const []const u8 = &.{
     "simpleble/src/backends/windows/AdapterWindows.cpp",
     "simpleble/src/backends/windows/PeripheralWindows.cpp",
     "simpleble/src/backends/windows/BackendWinRT.cpp",
+    "simpleble/src/backends/windows/MtaManager.cpp",
     "simpleble/src/backends/windows/Utils.cpp",
 };
 

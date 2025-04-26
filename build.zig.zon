@@ -1,11 +1,12 @@
 .{
     .name = .simpleble,
-    .version = "0.9.0",
+    .version = "0.9.1",
     .minimum_zig_version = "0.14.0",
     .dependencies = .{
         .simpleble = .{
-            .url = "git+https://github.com/simpleble/simpleble?ref=v0.9.0#b42d6ee9516ba8dc97f4de8dde2390e74aa697a2",
-            .hash = "N-V-__8AAM3VFgC8wND7_hHz3dWHCXlNtYd6Ta5YNsHIBF_f",
+            // With my patch to fix windows backend.
+            .url = "git+https://github.com/RoadRoller01/simpleble-real.git#c8b40631461ff1ab63b95ecc0b662722494b6225",
+            .hash = "N-V-__8AAPJ1JQBXS_TsRbNEeymokofgUJUT8P-FDc_XnaQ9",
         },
         .fmt = .{
             .url = "git+https://github.com/allyourcodebase/fmt-zig#72f037c03fc78dc615628959fafce03000086777",
