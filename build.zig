@@ -16,6 +16,8 @@ pub fn build(b: *std.Build) void {
     const log_level = b.option([]const u8, "log_level", "Log level (INFO, WARN, etc.)") orelse "INFO";
     const use_session_dbus = b.option(bool, "use_session_dbus", "Use session DBus on Linux") orelse false;
 
+    const examples_enabled = b.option(bool, "examples", "Build all SimpleBLE cpp examples") orelse false;
+
     // Platform detection
     const is_linux = target.result.os.tag == .linux;
     const is_windows = target.result.os.tag == .windows;
@@ -173,6 +175,34 @@ pub fn build(b: *std.Build) void {
 
     // Tests
     // Tests have not yet been ported...
+
+    if (examples_enabled) {
+        for (examples) |example| {
+            const exe = b.addExecutable(.{
+                .name = example["examples/simpleble/src/".len .. example.len - 4],
+                .root_module = b.createModule(.{
+                    .target = target,
+                    .optimize = optimize,
+                    .link_libcpp = true,
+                }),
+            });
+            exe.addIncludePath(upstream.path("examples/simpleble/src"));
+            exe.addCSourceFiles(.{
+                .root = upstream.path("."),
+                .files = &.{
+                    example,
+                    "examples/simpleble/src/utils.cpp",
+                },
+                .flags = cpp_flags,
+            });
+            for (simpleble.root_module.include_dirs.items) |include_dir| {
+                exe.root_module.include_dirs.append(b.allocator, include_dir) catch unreachable;
+            }
+            exe.linkLibrary(simpleble);
+
+            b.installArtifact(exe);
+        }
+    }
 }
 
 const common_sources: []const []const u8 = &.{
@@ -280,4 +310,15 @@ const c_binding_sources: []const []const u8 = &.{
     "simpleble/src_c/peripheral.cpp",
     "simpleble/src_c/logging.cpp",
     "simpleble/src_c/utils.cpp",
+};
+
+const examples: []const []const u8 = &.{
+    "examples/simpleble/src/list_adapters.cpp",
+    "examples/simpleble/src/list_adapters_safe.cpp",
+    "examples/simpleble/src/multiconnect.cpp",
+    "examples/simpleble/src/notify.cpp",
+    "examples/simpleble/src/notify_multi.cpp",
+    "examples/simpleble/src/read.cpp",
+    "examples/simpleble/src/scan.cpp",
+    "examples/simpleble/src/write.cpp",
 };
